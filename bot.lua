@@ -1,96 +1,168 @@
+--Requires
 local discordia = require('discordia')
 local utf8 = require('utf8_simple')
 local LIP = require 'LIP';
-local servername = "SERVER NAME"
+local servername = "WaterHack"
+local botChannel = "bot"
+localbotkey = "key"
+--Log function (Log messages to file)
+local function log(message)
+    file = io.open("log.txt", "a")
+    file:write(message.."\n")
+    file:close()
+end
 
 
+--Declare discord client
 local client = discordia.Client()
 
+--Initialize bot
 client:on('ready', function()
     print('Logged in as '.. client.user.username)
+    client:setGameName("WaterHack")
+    log(">>>>> BOT LOGIN <<<<<")
 end)
 
+--User table for nothing yet.. TODO: User saving/stuffs
 local savedusers = {
     users = {
     }
 }
 
+--Load saved users file.
 local savedusers = LIP.load('test.ini')
 
-
-
-
-local badword = {
-    [1] = "fag",
-    [2] = "nigger",
-    [3] = "nigga",
-    [4] = "cunt",
-    [5] = "dick",
-    [6] = "fuck",
-    [7] = "shit",
-    [8] = "asshole",
-    [9] = "retard",
-    [10] = "cum",
-    [11] = "slut",
-    [12] = "tuanha",
-    [13] = "winifix",
-    [14] = "soapbox",
-    [15] = "n1gg4",
-    [16] = "n1gg3r",
-    [17] = "fatass",
+--Admin table
+local admin = {
+    [210152605467410434] = true,
+    [210615876766924801] = true,
+    [174158345073065984] = true,
+    [127837881917112321] = true,
+    [165658644493369345] = true,
+    [117337445833506821] = true,
 }
 
+--Words we don't want users to say
+local badword = require('swears')
 
+--Our modules
+local modules = {
+    ["prune"] = {toggle = true, name = "Prune", key = "prune"},
+    ["antispam"] = {toggle = true, name = "Anti Spam", key = "antispam"},
+    ["swearfilter"] = {toggle = true, name = "Swear Filter", key = "swearfilter"},
+    ["ping"] = {toggle = true, name = "Ping", key = "ping"},
+}
 
+--Local variables
+local downloadLink = "https://waterhack.co/forumdisplay.php?fid=9"
 local prevauthor
 local prevmsg
 local sent
 local this
+local word = {}
 
-
-
-
+--Message listening event (The real bot)
 client:on('messageCreate', function(message)
-    if message.guild and message.guild.name == "WaterHack" then
-        local msg = string.lower(message.content)
+    if message.guild and message.guild.name == servername then
+        local msg = utf8.strip(string.lower(message.content))
+        local channel = message.channel.name
 
-
-        if msg == prevmsg then
-            if (message.author.id == "210152605467410434" or message.author.id == "210615876766924801" or message.author.id == "174158345073065984" or message.author.id == "127837881917112321" or message.author.id == "165658644493369345") then else
-                message:delete()
-                print("Anti spam, removed "..message.author.name.."\'s message as it was the same as a previous")
+        log(msg)
+        
+        for i in string.gmatch(msg, "%S+") do
+            table.insert(word, i)
+        end
+        
+        --Module management
+        if admin[tonumber(message.author.id)] and word[1] == "!module" then
+            message:delete()
+            if word[2] == "status" then
+                if modules[word[3]] == nil then
+                    message.channel:sendMessage("Module not found "..word[3]..".")
+                elseif not modules[word[3]].toggle then
+                    message.channel:sendMessage("Module "..word[3].." disabled.")
+                elseif modules[word[3]].toggle then
+                    message.channel:sendMessage("Module "..word[3].." enabled.")
+                end
+            elseif word[2] == "toggle" then
+                if modules[word[3]] == nil then
+                    message.channel:sendMessage("Module not found "..word[3]..".")
+                elseif modules[word[3]].toggle then
+                    modules[word[3]].toggle = false
+                    message.channel:sendMessage("Module "..word[3].." disabled.")
+                elseif not modules[word[3]].toggle then
+                    modules[word[3]].toggle = true
+                    message.channel:sendMessage("Module "..word[3].." enabled.")
+                end
+            elseif word[2] == "list" then
+                message.channel:sendMessage("Modules List")
+                for k,v in pairs(modules) do
+                    message.channel:sendMessage("Module: "..modules[k].name.." Key: "..modules[k].key)
+                end
+            else
+            
+                message.channel:sendMessage("Module Commands: status; toggle; list")
+            
             end
         end
-        for i=1, #badword do
-            if string.find(utf8.strip(msg), string.lower(badword[i])) then
-                if (message.author.id == "210152605467410434" or message.author.id == "210615876766924801" or message.author.id == "174158345073065984" or message.author.id == "127837881917112321" or message.author.id == "165658644493369345") then else
+
+        --Anti spam filter
+        if modules["antispam"] and msg == prevmsg and not admin[tonumber(message.author.id)] then
+            message:delete()
+            message.author:sendMessage("Please do not post the same message as other users!")
+            log("> Deleted a repeat: "..msg)
+        end
+        
+        --Pings a user
+        if modules["ping"] and admin[tonumber(message.author.id)] and word[1] == "!ping" then
+            message:delete()
+            for user in message.mentionedUsers do
+                user:sendMessage(message.author.username.." just pinged you!")
+            end
+        end
+        
+        --Anti swearing filter
+        if modules["swearfilter"] and not admin[tonumber(message.author.id)] then
+            for i=1, #word do
+                if badword[word[i]] then
                     message:delete()
-                    message.channel:sendMessage("Please do not swear, "..message.author.name.." ( "..message.author.username.." )".."!")
-                    print(message.author.name.." Just Swore!")
+                    message.author:sendMessage("Please do not swear!")
+                    print(msg)
+                    log("> Deleted a swear: "..msg)
+                    break
                 end
             end
         end
 
-
-        local channel = message.channel.name
-        if channel == "bot" and msg == "!misty" then
+        --Displays information about the bot.
+        if channel == botChannel and msg == "!misty" then
             message.channel:sendMessage("I\'m Misty!\nI was created to keep WaterHack safe (:")
+            log(">>>>> !misty called <<<<<")
         end
+        
+        --Sends an invite code to the user that requested it
         if msg == '!invite' then
             message.author:sendMessage("2zn5qcC")
+            log("> Sent invite to "..message.author.username)
         end
-        if channel == "bot" and msg == '!hello' then
+        
+        --Say hello (:
+        if channel == botChannel and msg == '!hello' then
             message:delete()
             print("Message: "..message.id.." Deleted")
             print("Message Author: "..message.author.name)
             print("~~~~~~~~~~\n")
             message.channel:sendMessage('Hi, Im Misty, how can I help you?')
             print("Someone said hello!")
+            log("> Said hello")
             return
         end
+        
+        --Sends the user the current class list
         if msg == '!classes' or msg == '!rotations' then
             message:delete()
             print("Message: "..message.id.." Deleted")
+            log("> Sent classes to "..message.author.username)
             message.author:sendMessage {
                 embed = {
                     title = "WaterHack | Death knight",
@@ -260,17 +332,23 @@ client:on('messageCreate', function(message)
             print("Sent classes message to: "..message.author.name)
             return
         end
+        
+        --Sends the user a download link
         if msg == '!download' then
             message:delete()
             print("Message: "..message.id.." Deleted")
             print("Message Author: "..message.author.name)
             print("~~~~~~~~~~\n")
-            message.author:sendMessage("https://waterhack.co/forumdisplay.php?fid=9")
+            message.author:sendMessage(downloadLink)
             print("Sent download message to: "..message.author.name)
+            log("> Sent download to "..message.author.username)
             return
         end
+        
+        --Sends the user the help list
         if msg == "!help" then
             message:delete()
+            log("> Sent help to "..message.author.username)
             message.author:sendMessage {
                 embed = {
                     title = "WaterHack | Help",
@@ -293,19 +371,28 @@ client:on('messageCreate', function(message)
             print("Sent help message to: "..message.author.name)
             return
         end
-        if channel == "bot" and  msg == "!debug" then
+        
+        --Debug statistics about the bot/server
+        if channel == botChannel and  msg == "!debug" then
+            log("> Someone debugged")
             message.channel:sendMessage("Channel Name: "..message.channel.name)
             message.channel:sendMessage("Server Name: "..message.guild.name)
             message.channel:sendMessage("Text Channel Count: "..message.guild.textChannelCount)
             message.channel:sendMessage("Voice Channel Count: "..message.guild.voiceChannelCount)
             print("Printed Debug\n")
         end
+        
+        --Sends the user their snowflake
         if msg == "!whoami" then
             message:delete()
             message.author:sendMessage("You're a snowflake, here\'s your identifier: "..message.author.id)
             print(message.author.name.." Asked who he was, he\'s: "..message.author.id)
+            log("> Sent snowflake to "..message.author.username)
         end
-        if channel == "bot" and msg == "!stats" then
+        
+        --Displays stats about the server
+        if channel == botChannel and msg == "!stats" then
+            log("> Posted Stats")
             message:delete()
             message.channel:sendMessage {
                 embed = {
@@ -319,21 +406,35 @@ client:on('messageCreate', function(message)
                 }
             }
         end
-        if (message.author.id == "210152605467410434" or message.author.id == "210615876766924801" or message.author.id == "174158345073065984" or message.author.id == "127837881917112321" or message.author.id == "165658644493369345") and msg == "!prune" then
-            message.channel:bulkDelete(10)
-            message.channel:sendMessage("Delete the 10 most recent message :)")
+        
+        --Prune module USAGE: !prune (number)
+        if modules["prune"] and admin[tonumber(message.author.id)] and string.find(msg, "!prune") then
+            if tonumber(word[2]) == nil then
+                message.channel:sendMessage("Error, enter a number silly!")
+            elseif math.floor(tonumber(word[2])) >= 1 and math.floor(tonumber(word[2])) <= 100 then
+                message.channel:bulkDelete(math.floor(tonumber(string.sub(msg, 7))))
+                message.channel:sendMessage("Deleted the "..math.floor(tonumber(word[2])).." most recent message(s) :)")
+            elseif math.floor(tonumber(word[2])) < 1 or math.floor(tonumber(word[2])) > 100 then
+                message.channel:sendMessage("Error, must be >= 1 and <= 100!")
+            else
+                message.channel:sendMessage("Error!")
+            end
+            log("> User Pruned: "..message.author.username)
             print(message.author.name.." PRUNED MESSAGES!")
         end
-        if (message.author.id == "210152605467410434" or message.author.id == "210615876766924801" or message.author.id == "174158345073065984" or message.author.id == "127837881917112321" or message.author.id == "165658644493369345") and string.find(msg, "!whois") then
+        
+        --Administrator command to get other users snowflakes
+        if admin[tonumber(message.author.id)] and string.find(msg, "!whois") then
             for user in message.mentionedUsers do
                 message.author:sendMessage(user.name.."\'s snowflake is: "..user.id)
             end
             message:delete()
+            log("> Sent a snowflake to "..message.author.username)
         end
 
+        --Save a user to user file
         if msg == "!saveme" then
             for i=1, #savedusers.users do
-
                 if savedusers.users[i] == message.author.id then
                     message.channel:sendMessage("You already exist!")
                 else
@@ -344,13 +445,10 @@ client:on('messageCreate', function(message)
                 end
             end
         end
-        if msg == prevmsg then
-            print(message.guild.name)
-            message:delete()
-            message.author:sendMessage("Please do not post the same message as other users!")
-        end
 
+        --Quote the last posted message
         if string.find(msg, "!quote") then
+            log("> Quoted")
             message.channel:sendMessage{
                 embed = {
                     title = prevauthor,
@@ -362,47 +460,43 @@ client:on('messageCreate', function(message)
                 }
             }
         end
-
-        --if string.find(msg, "[react]") then
-        --    message:addReaction("🇲")
-        --    message:addReaction("🇮")
-        --    message:addReaction("🇸")
-        --    message:addReaction("🇹")
-        --    message:addReaction("🇾")
-        --    message:addReaction("🌁")
-        --end
-
+        
+        
+        
+        
+        
+        --Reset or utilize local variables
         prevauthor = message.author.name
         prevmsg = msg
         print(prevmsg)
+        word = {}
     end
-
 end)
 
 client:on('memberJoin', function(member)
-
-        if member then
-            for user in client.members do
-                for role in client.roles do
-                    if string.find(role.name, "Developer") then
-                        this = role
-                    end
-                end
-                if user:hasRole(this) then
-                    user:sendMessage(member.name.." Joined "..servername.."!")
+    log("> "..member.name.." Joined "..servername)
+    if member then
+        for user in client.members do
+            for role in client.roles do
+                if string.find(role.name, "Developer") then
+                    this = role
                 end
             end
-            for user in client.members do
-                for role in client.roles do
-                    if string.find(role.name, "Gucci") then
-                        this = role
-                    end
-                end
-                if user:hasRole(this) then
-                    user:sendMessage(member.name.." Joined "..servername.."!")
-                end
+            if user:hasRole(this) then
+                user:sendMessage(member.name.." Joined "..servername.."!")
             end
         end
+        for user in client.members do
+            for role in client.roles do
+                if string.find(role.name, "Gucci") then
+                    this = role
+                end
+            end
+            if user:hasRole(this) then
+                user:sendMessage(member.name.." Joined "..servername.."!")
+            end
+        end
+    end
 end)
 
-client:run('KEY')
+client:run(botkey)
