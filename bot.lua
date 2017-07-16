@@ -257,7 +257,7 @@ client:on('messageCreate', function(message)
 
 
         for i=1, #word do
-            if string.find(msg, 'terp') then
+            if word[1] == 'terp' then
                 message.channel:sendMessage("TURPIN IT UPPPPPPPP!")
                 break
             end
@@ -565,7 +565,7 @@ client:on('messageCreate', function(message)
         end
 
         --Administrator command to get other users snowflakes
-        if admin[tonumber(message.author.id)] and string.find(msg, "!whois") then
+        if admin[tonumber(message.author.id)] and word[1] == "!whois" then
             for user in message.mentionedUsers do
                 message.author:sendMessage(user.name.."\'s snowflake is: "..user.id)
             end
@@ -602,7 +602,7 @@ client:on('messageCreate', function(message)
 --        end
 
         --Quote the last posted message
-        if string.find(msg, "!quote") then
+        if word[1] == "!quote" then
             log("> Quoted")
             message.channel:sendMessage{
                 embed = {
