@@ -8,7 +8,7 @@ local botVersion = "3.0.0.3"
 --log function (log messages to file)
 local function log(message)
     file = io.open("log.txt", "a")
-    file:write("["..os.date('!%Y-%m-%dT%H:%M:%S').."]"..message,"\n")
+    file:write("["..os.date('!%Y-%m-%dT%H:%M:%S').."]"..tostring(message),"\n")
     file:close()
 end
 
@@ -61,6 +61,22 @@ local this = "nil"
 local lastMessageTime = 1000
 local antiSpamStrength = .7
 local word
+--Self promotable ranks
+local ranks = {
+    ['deathknight'] = true,
+    ['demonhunter'] = true,
+    ['druid'] = true,
+    ['hunter'] = true,
+    ['mage'] = true,
+    ['monk'] = true,
+    ['paladin'] = true,
+    ['priest'] = true,
+    ['rogue'] = true,
+    ['shaman'] = true,
+    ['warlock'] = true,
+    ['warrior'] = true,
+
+}
 
 function string_simil (fx, fy)
   local n = string.len(fx)
@@ -175,186 +191,26 @@ client:on('messageCreate', function(message)
             message.channel:sendMessage("Message recieved in: "..math.random().."s")
         end
 
-        if word[1] == "!rank" then
-            if word[2] == "deathknight" then
+        if word[1] == "!rank" or word[1] == "!role" or word[1] == "!class" then
+            if ranks[word[2]] then
                 for role in client.roles do
-                    if string.find(role.name, "DeathKnight") then
+                    if string.find(string.lower(role.name), tostring(word[2])) then
                         this = role
                     end
                 end
                 if message.member:hasRole(this) then
                     message:delete()
-                    message.author:sendMessage("You already have that rank!")
+                    message.author:sendMessage("You have been removed from: "..tostring(word[2]).."!")
+                    message.member:removeRole(this)
                 else
                     message:delete()
                     message.member:addRole(this)
-                    message.author:sendMessage("You've been added to the Death Knight rank!")
+                    message.author:sendMessage("You've been added to the "..tostring(word[2]).." rank!")
                 end
-            end
-            if word[2] == "demonhunter" then
-                for role in client.roles do
-                    if string.find(role.name, "DemonHunter") then
-                        this = role
-                    end
-                end
-                if message.member:hasRole(this) then
-                    message:delete()
-                    message.author:sendMessage("You already have that rank!")
-                else
-                    message:delete()
-                    message.member:addRole(this)
-                    message.author:sendMessage("You've been added to the Demon Hunter rank!")
-                end
-            end
-            if word[2] == "druid" then
-                for role in client.roles do
-                    if string.find(role.name, "Druid") then
-                        this = role
-                    end
-                end
-                if message.member:hasRole(this) then
-                    message:delete()
-                    message.author:sendMessage("You already have that rank!")
-                else
-                    message:delete()
-                    message.member:addRole(this)
-                    message.author:sendMessage("You've been added to the Druid rank!")
-                end
-            end
-            if word[2] == "hunter" then
-                for role in client.roles do
-                    if string.find(role.name, "Hunter") and not string.find(role.name, "Demon") then
-                        this = role
-                    end
-                end
-                if message.member:hasRole(this) then
-                    message:delete()
-                    message.author:sendMessage("You already have that rank!")
-                else
-                    message:delete()
-                    message.member:addRole(this)
-                    message.author:sendMessage("You've been added to the Hunter rank!")
-                end
-            end
-            if word[2] == "mage" then
-                for role in client.roles do
-                    if string.find(role.name, "Mage") then
-                        this = role
-                    end
-                end
-                if message.member:hasRole(this) then
-                    message:delete()
-                    message.author:sendMessage("You already have that rank!")
-                else
-                    message:delete()
-                    message.member:addRole(this)
-                    message.author:sendMessage("You've been added to the Mage rank!")
-                end
-            end
-            if word[2] == "monkn" then
-                for role in client.roles do
-                    if string.find(role.name, "Monk") then
-                        this = role
-                    end
-                end
-                if message.member:hasRole(this) then
-                    message:delete()
-                    message.author:sendMessage("You already have that rank!")
-                else
-                    message:delete()
-                    message.member:addRole(this)
-                    message.author:sendMessage("You've been added to the Monk rank!")
-                end
-            end
-            if word[2] == "paladin" then
-                for role in client.roles do
-                    if string.find(role.name, "Paladin") then
-                        this = role
-                    end
-                end
-                if message.member:hasRole(this) then
-                    message:delete()
-                    message.author:sendMessage("You already have that rank!")
-                else
-                    message:delete()
-                    message.member:addRole(this)
-                    message.author:sendMessage("You've been added to the Paladin rank!")
-                end
-            end
-            if word[2] == "priest" then
-                for role in client.roles do
-                    if string.find(role.name, "Priest") then
-                        this = role
-                    end
-                end
-                if message.member:hasRole(this) then
-                    message:delete()
-                    message.author:sendMessage("You already have that rank!")
-                else
-                    message:delete()
-                    message.member:addRole(this)
-                    message.author:sendMessage("You've been added to the Priest rank!")
-                end
-            end
-            if word[2] == "rogue" then
-                for role in client.roles do
-                    if string.find(role.name, "Rogue") then
-                        this = role
-                    end
-                end
-                if message.member:hasRole(this) then
-                    message:delete()
-                    message.author:sendMessage("You already have that rank!")
-                else
-                    message:delete()
-                    message.member:addRole(this)
-                    message.author:sendMessage("You've been added to the Rogue rank!")
-                end
-            end
-            if word[2] == "shaman" then
-                for role in client.roles do
-                    if string.find(role.name, "Shaman") then
-                        this = role
-                    end
-                end
-                if message.member:hasRole(this) then
-                    message:delete()
-                    message.author:sendMessage("You already have that rank!")
-                else
-                    message:delete()
-                    message.member:addRole(this)
-                    message.author:sendMessage("You've been added to the Shaman rank!")
-                end
-            end
-            if word[2] == "warlock" then
-                for role in client.roles do
-                    if string.find(role.name, "Warlock") then
-                        this = role
-                    end
-                end
-                if message.member:hasRole(this) then
-                    message:delete()
-                    message.author:sendMessage("You already have that rank!")
-                else
-                    message:delete()
-                    message.member:addRole(this)
-                    message.author:sendMessage("You've been added to the Warlock rank!")
-                end
-            end
-            if word[2] == "warrior" then
-                for role in client.roles do
-                    if string.find(role.name, "Warrior") then
-                        this = role
-                    end
-                end
-                if message.member:hasRole(this) then
-                    message:delete()
-                    message.author:sendMessage("You already have that rank!")
-                else
-                    message:delete()
-                    message.member:addRole(this)
-                    message.author:sendMessage("You've been added to the Warrior rank!")
-                end
+            else
+                message:delete()
+                message.author:sendMessage(word[2].." is not a valid rank.")
+                message.author:sendMessage("Valid roles: deathknight,demonhunter,druid,hunter,mage,monk,paladin,priest,rogue,shaman,warlock,warrior")
             end
         end
 
@@ -813,4 +669,4 @@ client:on('memberJoin', function(member)
     end
 end)
 
-client:run('bot-key-goes-here')
+client:run('Bot Key')
