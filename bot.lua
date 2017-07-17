@@ -47,7 +47,6 @@ local badword = require('swears')
 --Our modules
 local modules = {
     ["prune"] = {toggle = true, name = "Prune", key = "prune"},
-    ["antispam"] = {toggle = true, name = "Anti Spam", key = "antispam"},
     ["swearfilter"] = {toggle = true, name = "Swear Filter", key = "swearfilter"},
     ["ping"] = {toggle = true, name = "Ping", key = "ping"},
 }
@@ -59,7 +58,6 @@ local prevmsg = "nil"
 local sent = "nil"
 local this = "nil"
 local lastMessageTime = 1000
-local antiSpamStrength = .7
 local word
 --Self promotable ranks
 local ranks = {
@@ -75,38 +73,7 @@ local ranks = {
     ['shaman'] = true,
     ['warlock'] = true,
     ['warrior'] = true,
-
 }
-
-function string_simil (fx, fy)
-  local n = string.len(fx)
-  local m = string.len(fy)
-  local ssnc = 0
-
-  if n > m then
-    fx, fy = fy, fx
-    n, m = m, n
-  end
-
-  for i = n, 1, -1 do
-    if i <= string.len(fx) then
-    for j = 1, n-i+1, 1 do
-        local pattern = string.sub(fx, j, j+i-1)
-        if string.len(pattern) == 0 then break end
-        local found_at = string.find(fy, pattern)
-        if found_at ~= nil then
-          ssnc = ssnc + (2*i)^2
-          fx = string.sub(fx, 0, j-1) .. string.sub(fx, j+i)
-          fy = string.sub(fy, 0, found_at-1) .. string.sub(fy, found_at+i)
-          break
-        end
-      end
-    end
-  end
-
-  return (ssnc/((n+m)^2))^(1/2)
-
-end
 
 --Message listening event (The real bot)
 client:on('messageCreate', function(message)
@@ -116,9 +83,7 @@ client:on('messageCreate', function(message)
         local channel = message.channel.name
 
         --Anti spam filter
-        if modules["antispam"].toggle and string_simil(prevmsg,msg) > antiSpamStrength and not admin[tonumber(message.author.id)] then
-            message:delete()
-        end
+
 
 
         log("["..channel.."]".."["..message.author.username.."]"..msg)
@@ -224,23 +189,6 @@ client:on('messageCreate', function(message)
                                         "login with WATERHACK username and password.\n"..
                                         "Enjoy :)\n"..
                                         "* If injecting in game you must /reload after you recieve a lua error. ```")
-        end
-
-        if modules["antispam"].toggle and admin[tonumber(message.author.id)] and word[1] == "!panic" then
-            message.channel:sendMessage("I'll take care of it!")
-            antiSpamStrength = 0
-        end
-
-        if modules["antispam"].toggle and admin[tonumber(message.author.id)] and word[1] == "!antispam" then
-            if word[3] == nil or tonumber(word[3]) == nil then
-                message.channel:sendMessage("Invalid number or no number found.")
-            end
-            if word[2] == "strength" then
-                antiSpamStrength = tonumber(word[3])
-                message.channel:sendMessage("Anti Spam strength set to: "..tonumber(word[3]))
-            else
-                message.channel:sendMessage("Wrong usage, did you mean !antispam strength?")
-            end
         end
 
 
@@ -497,10 +445,6 @@ client:on('messageCreate', function(message)
                         {name = "!prune <number> | (ADMIN)", value = "Deletes <number> messages from the channel!", inline = true},
                         {name = "!whois | (ADMIN)", value = "Who is (unit)!", inline = true},
                         {name = "!module <toggle|status|list> <module> | (ADMIN)", value = "Toggles, displays information, lists current modules!", inline = true},
-                        {name = "!antispam <strength> <0-1> | (ADMIN)", value = "Sets the strength of the anti spam filter. ", inline = true},
-                        {name = "!panic | (ADMIN)", value = "Sets the antispam filter strength to 0.", inline = true},
-
-
                     },
                     color = discordia.Color(114, 137, 218).value,
                     timestamp = os.date('!%Y-%m-%dT%H:%M:%S')
@@ -643,30 +587,7 @@ end)
 
 client:on('memberJoin', function(member)
     log("> "..member.name.." Joined "..servername)
-    if member then
-        for user in client.members do
-            for role in client.roles do
-                if string.find(role.name, "Developer") then
-                    this = role
-                end
-            end
-            if user:hasRole(this) then
-                user:sendMessage(member.name.." Joined "..servername.."!")
-                break;
-            end
-        end
-        for user in client.members do
-            for role in client.roles do
-                if string.find(role.name, "Gucci") then
-                    this = role
-                end
-            end
-            if user:hasRole(this) then
-                user:sendMessage(member.name.." Joined "..servername.."!")
-                break;
-            end
-        end
-    end
+
 end)
 
-client:run('Bot Key')
+client:run('BotKey')
