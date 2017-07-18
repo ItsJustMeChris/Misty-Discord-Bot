@@ -211,9 +211,13 @@ client:on('messageCreate', function(message)
             end
         end
 
+        if word[1] == "!source" then
+            message.channel:sendMessage("I was created by Chris, you can find my insides here: https://github.com/ItsJustMeChris/Misty-Discord-Bot")
+        end
+
 
         --Displays information about the bot.
-        if channel == botChannel and msg == "!misty" then
+        if word[1] == "!misty" then
             message.channel:sendMessage("I\'m Misty!\nI was created to keep WaterHack safe (:")
             log(">>>>> !misty called <<<<<")
         end
